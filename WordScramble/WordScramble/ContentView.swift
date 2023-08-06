@@ -16,12 +16,15 @@ struct ContentView: View {
     @State private var errorMessage = ""
     @State private var showingError = false
     
+    @State private var score = 0
+    
     var body: some View {
         NavigationView {
             List {
                 Section {
                     TextField("Enter your word", text: $newWord)
                         .autocapitalization(.none)
+                    Text("Score: \(score)")
                 }
                 
                 Section {
@@ -41,6 +44,9 @@ struct ContentView: View {
             } message: {
                 Text(errorMessage)
             }
+            .toolbar {
+                Button("Restart", action: startGame)
+            }
         }
     }
     
@@ -50,6 +56,16 @@ struct ContentView: View {
         
         guard isOriginal(word: answer) else {
             wordError(title: "Word already used", message: "Be more original!")
+            return
+        }
+        
+        guard isLongEnough(word: answer) else {
+            wordError(title: "Word not long enough", message: "Your answer must be more than two letters.")
+            return
+        }
+        
+        guard isNotStartWord(word: answer) else {
+            wordError(title: "Word is invalid", message: "You can't just put the starting word!")
             return
         }
 
@@ -67,6 +83,7 @@ struct ContentView: View {
             usedWords.insert(answer, at: 0)
         }
         
+        score += (10 * answer.count) + (5 * usedWords.count)
         newWord = ""
     }
     
@@ -75,6 +92,8 @@ struct ContentView: View {
             if let startWords = try? String(contentsOf: startGameURL) {
                 let allWords = startWords.components(separatedBy: "\n")
                 rootWord = allWords.randomElement() ?? "silkworm"
+                usedWords.removeAll()
+                score = 0
                 return
             }
         }
@@ -84,6 +103,14 @@ struct ContentView: View {
     
     func isOriginal(word: String) -> Bool {
         !usedWords.contains(word)
+    }
+    
+    func isLongEnough(word: String) -> Bool {
+        word.count >= 3
+    }
+    
+    func isNotStartWord(word: String) -> Bool {
+        word != rootWord
     }
     
     func isPossible(word: String) -> Bool {
