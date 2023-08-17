@@ -14,20 +14,43 @@ struct ContentView: View {
     var body: some View {
         NavigationView {
             List {
-                ForEach(expenses.items) { item in
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text(item.name)
-                                .font(.headline)
-                            Text(item.type)
+                // Personal expenses
+                Section("Personal expenses") {
+                    ForEach(expenses.personalItems) { item in
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text(item.name)
+                                    .font(.headline)
+                                Text(item.type)
+                            }
+                            
+                            Spacer()
+                            
+                            Text(item.amount, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
+                                .font(getAmountFont(for: item.amount))
                         }
-                        
-                        Spacer()
-                        
-                        Text(item.amount, format: .currency(code: "USD"))
                     }
+                    .onDelete(perform: removePersonalItems)
                 }
-                .onDelete(perform: removeItems)
+                
+                // Business expenses
+                Section("Business Expenses") {
+                    ForEach(expenses.businessItems) { item in
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text(item.name)
+                                    .font(.headline)
+                                Text(item.type)
+                            }
+                            
+                            Spacer()
+                            
+                            Text(item.amount, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
+                                .font(getAmountFont(for: item.amount))
+                        }
+                    }
+                    .onDelete(perform: removeBusinessItems)
+                }
             }
             .navigationTitle("iExpense")
             .toolbar {
@@ -43,8 +66,31 @@ struct ContentView: View {
         }
     }
     
-    func removeItems(at offsets: IndexSet) {
-        expenses.items.remove(atOffsets: offsets)
+    func getAmountFont(for amount: Double) -> Font {
+        if amount < 10 { return .body }
+        else if amount < 100 { return .title }
+        else { return .largeTitle }
+    }
+    
+    func removeItems(at offsets: IndexSet, in itemList: [ExpenseItem]) {
+        var objectsToDelete = IndexSet()
+        
+        for offset in offsets {
+            let item = itemList[offset]
+            if let index = expenses.items.firstIndex(of: item) {
+                objectsToDelete.insert(index)
+            }
+        }
+        
+        expenses.items.remove(atOffsets: objectsToDelete)
+    }
+    
+    func removePersonalItems(at offsets: IndexSet) {
+        removeItems(at: offsets, in: expenses.personalItems)
+    }
+    
+    func removeBusinessItems(at offsets: IndexSet) {
+        removeItems(at: offsets, in: expenses.businessItems)
     }
 }
 
